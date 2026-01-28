@@ -96,6 +96,7 @@
     <QtUic Include="Calculator.ui" />
     <QtMoc Include="Calculator.h" />
     <ClCompile Include="Calculator.cpp" />
+    <ClCompile Include="DataAccessor.cpp" />
     <ClCompile Include="DataContainer.cpp" />
     <ClCompile Include="DataGenerator.cpp" />
     <ClCompile Include="main.cpp" />
