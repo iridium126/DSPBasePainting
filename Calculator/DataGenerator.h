@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "DataContainer.h"
-#include <QPointF>
 #include <QHash>
 #include <qmath.h>
 
@@ -55,7 +54,10 @@ private:
 	void get_x_range(qreal min_azimuth_angle, qreal max_azimuth_angle, int y, int& min_x, int& max_x, int& min_m, int& max_m, qreal& minimal_azimuth_angle, int& latitude_length);
 	void init_tile_zone(int min_y, int max_y, int min_n, int max_n, qreal min_azimuth_angle, qreal max_azimuth_angle);
 	void init_latitudinal_zone(int min_y, int max_y, int min_n, int max_n, qreal min_azimuth_angle, qreal max_azimuth_angle);
-	int get_point_index(QPointF& point);
+	int get_point_index(const QPointF& point);
+
+	void ProcessData();
+	QPointF spherical_to_screen_uv(const QPointF& point);
 
 	static constexpr int edge_segments = 8; // 每块地基划分为8*8=64块瓦片
 	static constexpr int planet_radius = 200; // 行星半径200m

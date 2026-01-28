@@ -2,9 +2,11 @@
 
 DataGenerator::DataGenerator(DataContainer& container) :container(container)
 {
+	index_map.reserve(100000);
 	points.reserve(10000000);
 	raw_data.reserve(10000000);
 	GenerateData();
+	ProcessData();
 }
 
 DataGenerator::~DataGenerator()
@@ -454,12 +456,12 @@ void DataGenerator::init_latitudinal_zone(int min_y, int max_y, int min_n, int m
 			else
 				index[3] = get_point_index(point3);
 			foundation_index = reformOffsets[y + (i - 1 + n) / edge_segments * dir_y] + x + (j - 1 + m) / edge_segments * dir_x;
-			raw_data.emplace_back(index, foundation_index / 512 + (i - 1 + n) % edge_segments, foundation_index % 512 + (j - 1 + m) % edge_segments);
+			raw_data.emplace_back(index, foundation_index / 512 * edge_segments + (i - 1 + n) % edge_segments, foundation_index % 512 * edge_segments + (j - 1 + m) % edge_segments);
 		}
 	}
 }
 
-int DataGenerator::get_point_index(QPointF& point)
+int DataGenerator::get_point_index(const QPointF& point)
 {
 	int index;
 	if (index_map.contains(point))
@@ -471,4 +473,26 @@ int DataGenerator::get_point_index(QPointF& point)
 		index = point_count++;
 	}
 	return index;
+}
+
+void DataGenerator::ProcessData()
+{
+	container.data.reserve(raw_data.size());
+	for (auto& point : points)
+		point = spherical_to_screen_uv(point);
+	for (auto& tile : raw_data)
+	{
+		auto [u_min, u_max] = std::minmax({ points[tile.point_index[0]].x(), points[tile.point_index[1]].x(), points[tile.point_index[2]].x(), points[tile.point_index[3]].x() });
+		auto [v_min, v_max] = std::minmax({ points[tile.point_index[0]].y(), points[tile.point_index[1]].y(), points[tile.point_index[2]].y(), points[tile.point_index[3]].y() });
+		container.data.emplace_back(QPointF((u_min + u_max) / 2, (v_min + v_max) / 2), tile.texture_pos);
+	}
+}
+
+QPointF DataGenerator::spherical_to_screen_uv(const QPointF& point)
+{
+	qreal i = sin(point.x()) * sin(point.y() - container.azimuth_angle);
+	qreal j = -sin(point.x()) * cos(container.polar_angle) * cos(point.y() - container.azimuth_angle) + cos(point.x()) * sin(container.polar_angle);
+	qreal k = sin(point.x()) * sin(container.polar_angle) * cos(point.y() - container.azimuth_angle) + cos(point.x()) * cos(container.polar_angle);
+	qreal temp = (1 - k * cos(container.painting_central_angle / 2)) * 2 / sin(container.painting_central_angle / 2);
+	return QPointF(0.5 + i / temp, 0.5 + j / temp);
 }
